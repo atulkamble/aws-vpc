@@ -341,6 +341,257 @@ For /26 → mask 255.255.255.192
 
 ---
 
+# ⭐ **AWS VPC – Important Points, Definitions, Tricks, Commands + Architecture Diagrams**
+
+---
+
+# 🧠 **1. Core Definitions**
+
+(Already provided above — kept same for completeness)
+
+---
+
+# 🧩 **2. AWS VPC Architecture Diagrams**
+
+---
+
+# 🖼 **A) BASIC VPC – Public + Private Subnet Architecture**
+
+### **ASCII Diagram**
+
+```
+                   AWS VPC (10.0.0.0/16)
+                 ─────────────────────────
+                      |             |
+                      |             |
+              Public Subnet    Private Subnet
+             (10.0.1.0/24)     (10.0.2.0/24)
+                  |                 |
+      ┌───────────┴──────┐         |
+      |   EC2 (Web)       |         |
+      └───────────┬──────┘         |
+                  |                 |
+      ┌───────────┴──────┐         |
+      | Internet Gateway  |         |
+      └───────────┬──────┘         |
+                  |                 |
+            (Internet)              |
+                                    |
+        ┌───────────────────────────┴───────────┐
+        |         NAT Gateway (Public Subnet)   |
+        └───────────────────────────┬───────────┘
+                                    |
+                              Private EC2
+                         (No Internet Access)
+```
+
+---
+
+# 🖼 **B) MERMAID VPC DIAGRAM – PUBLIC + PRIVATE**
+
+```mermaid
+flowchart TD
+
+    VPC["VPC 10.0.0.0/16"]
+
+    IGW["Internet Gateway"]
+    NAT["NAT Gateway"]
+
+    subgraph PublicSubnet["Public Subnet 10.0.1.0/24"]
+        EC2Pub["EC2 Public"]
+    end
+
+    subgraph PrivateSubnet["Private Subnet 10.0.2.0/24"]
+        EC2Priv["EC2 Private"]
+    end
+
+    Internet(("Internet"))
+
+    Internet --> IGW
+    IGW --> EC2Pub
+    EC2Priv --> NAT --> IGW
+    VPC --> PublicSubnet
+    VPC --> PrivateSubnet
+```
+
+---
+
+# 🖼 **C) MULTI-AZ PRODUCTION VPC (Recommended Architecture)**
+
+```
+                         AWS REGION
+         ┌──────────────────────────────────────────┐
+
+         |       VPC (10.0.0.0/16)                  |
+         |                                           |
+         |   ┌──────────────┐     ┌──────────────┐  |
+         |   |  AZ-A         |     |  AZ-B         | |
+         |   |               |     |               | |
+         |   | Public Subnet |     | Public Subnet | |
+         |   | 10.0.1.0/24   |     | 10.0.2.0/24   | |
+         |   |   EC2/ALB     |     |   EC2/ALB     | |
+         |   |     NAT GW    |     |     NAT GW    | |
+         |   └──────────────┘     └──────────────┘  |
+         |                                           |
+         |   ┌──────────────┐     ┌──────────────┐  |
+         |   | Private-App   |     | Private-App   | |
+         |   | Subnet        |     | Subnet        | |
+         |   |10.0.11.0/24   |     |10.0.12.0/24   | |
+         |   | EC2/EKS Nodes |     | EC2/EKS Nodes | |
+         |   └──────────────┘     └──────────────┘  |
+         |                                           |
+         |   ┌──────────────┐     ┌──────────────┐  |
+         |   | Private-DB    |     | Private-DB    | |
+         |   | Subnet        |     | Subnet        | |
+         |   |10.0.21.0/24   |     |10.0.22.0/24   | |
+         |   | RDS/Redis     |     | RDS/Redis     | |
+         |   └──────────────┘     └──────────────┘  |
+
+         └──────────────────────────────────────────┘
+
+                IGW ←→ Public Subnets
+                NAT GW ←→ Private Subnets
+                SG + NACL for security
+```
+
+---
+
+# 🖼 **D) MERMAID DIAGRAM – MULTI-AZ VPC DESIGN**
+
+```mermaid
+flowchart TB
+
+subgraph VPC["VPC 10.0.0.0/16"]
+    subgraph AZA["AZ-A"]
+        PubA["Public Subnet\n10.0.1.0/24"]
+        NAT1["NAT Gateway A"]
+        AppA["Private App Subnet\n10.0.11.0/24"]
+        DBA["Private DB Subnet\n10.0.21.0/24"]
+    end
+
+    subgraph AZB["AZ-B"]
+        PubB["Public Subnet\n10.0.2.0/24"]
+        NAT2["NAT Gateway B"]
+        AppB["Private App Subnet\n10.0.12.0/24"]
+        DBB["Private DB Subnet\n10.0.22.0/24"]
+    end
+end
+
+Internet(("Internet"))
+IGW["Internet Gateway"]
+
+Internet --> IGW
+IGW --> PubA
+IGW --> PubB
+
+AppA --> NAT1 --> IGW
+AppB --> NAT2 --> IGW
+```
+
+---
+
+# 🖼 **E) VPC Endpoints Architecture Diagram**
+
+```
+                AWS VPC
+        ┌──────────────────────┐
+        |   Private Subnet     |
+        |   EC2 → S3 Access    |
+        |                      |
+        |     VPC Endpoint     |
+        |    (Gateway Type)    |
+        └─────────┬────────────┘
+                  |
+            No Internet Needed
+                  |
+    ┌─────────────┴──────────────┐
+    |            S3              |
+    └────────────────────────────┘
+```
+
+---
+
+# 💡 **3. CIDR Tricks (with visuals)**
+
+### Example: splitting `/16` into `/24`
+
+```
+VPC: 10.0.0.0/16
+
+Subnets:
+10.0.1.0/24  ← AZ-A public
+10.0.2.0/24  ← AZ-B public
+10.0.11.0/24 ← AZ-A app
+10.0.12.0/24 ← AZ-B app
+10.0.21.0/24 ← AZ-A DB
+10.0.22.0/24 ← AZ-B DB
+```
+
+---
+
+# 📌 **4. Important AWS VPC CLI Commands (with diagrams)**
+
+### **Create VPC**
+
+```bash
+aws ec2 create-vpc --cidr-block 10.0.0.0/16
+```
+
+---
+
+### **Architecture Mapping**
+
+```
+VPC
+ └── CIDR: 10.0.0.0/16
+```
+
+---
+
+### **Create Subnet**
+
+```bash
+aws ec2 create-subnet \
+  --vpc-id vpc-123 \
+  --cidr-block 10.0.1.0/24 \
+  --availability-zone ap-south-1a
+```
+
+```
+VPC
+ └── Subnet 10.0.1.0/24 (AZ-a)
+```
+
+---
+
+### **Create IGW**
+
+```bash
+aws ec2 create-internet-gateway
+aws ec2 attach-internet-gateway --internet-gateway-id igw-123 --vpc-id vpc-123
+```
+
+```
+Subnet → Route → IGW → Internet
+```
+
+---
+
+### **Create NAT**
+
+```bash
+aws ec2 allocate-address
+aws ec2 create-nat-gateway \
+  --subnet-id subnet-public \
+  --allocation-id eipalloc-xyz
+```
+
+```
+Private Subnet → NAT → IGW → Internet
+```
+
+---
+
 
 # AWS VPC Complete Course
 
