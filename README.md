@@ -107,6 +107,113 @@ This course content aligns with:
 - AWS Certified Advanced Networking - Specialty
 - AWS Certified SysOps Administrator - Associate
 
+---
+
+## 🌐 **AWS VPC Project — Secure Multi-Tier Architecture**
+
+This project builds a **production-grade AWS VPC** with:
+
+* Public & Private Subnets
+* Internet Gateway
+* NAT Gateway
+* Route Tables
+* Bastion Host
+* Private EC2 Instance
+* Security Groups
+* Terraform & CloudFormation Automation
+* AWS CLI Scripts
+
+---
+
+## 📌 **Architecture Overview**
+
+### **VPC CIDR:** `10.0.0.0/16`
+
+### **Subnets**
+
+| Subnet           | CIDR        | Type    | AZ          |
+| ---------------- | ----------- | ------- | ----------- |
+| public-subnet-a  | 10.0.1.0/24 | Public  | ap-south-1a |
+| public-subnet-b  | 10.0.2.0/24 | Public  | ap-south-1b |
+| private-subnet-a | 10.0.3.0/24 | Private | ap-south-1a |
+| private-subnet-b | 10.0.4.0/24 | Private | ap-south-1b |
+
+---
+
+# 📐 Mermaid Architecture Diagram
+
+```
+flowchart TD
+    IGW --> RT_Public
+    NAT --> RT_Private
+
+    RT_Public --> PublicA
+    RT_Public --> PublicB
+
+    RT_Private --> PrivateA
+    RT_Private --> PrivateB
+
+    Bastion --> PublicA
+    AppServer --> PrivateA
+
+    Internet --> IGW
+```
+
+---
+
+# 🔧 **Features**
+
+* Highly available 2-AZ architecture
+* NAT for private instances
+* Locked-down security groups
+* Works with Terraform & CloudFormation
+* CLI scripts for one-click deployment
+
+---
+
+# 🚀 **PART 2 — Full Terraform Code**
+
+(Includes providers, modules, main root code)
+
+👉 I will send **all files** next:
+
+* `provider.tf`
+* `variables.tf`
+* `main.tf`
+* `outputs.tf`
+* Modules: `vpc`, `subnets`, `nat-gw`, `igw`, `ec2`
+
+---
+
+# 📦 **PART 3 — Full CloudFormation Stack (YAML)**
+
+Complete `vpc-stack.yaml` + `parameters.json`
+
+---
+
+# 🖥️ **PART 4 — AWS CLI Shell Scripts**
+
+* Create VPC automatically
+* Launch Bastion & Private EC2
+* Test NAT, SSH, Security Groups
+
+---
+
+# 📁 **PART 5 — ZIP Project Download**
+
+I will generate a full zip file using Python (python_user_visible tool).
+
+---
+
+# 🗺️ **PART 6 — Architecture Diagrams**
+
+* ASCII
+* Mermaid
+* PNG (via vector)
+
+---
+
+
 ## 🤝 Contributing
 
 Found an error or want to improve the course? Contributions are welcome!
@@ -121,4 +228,3 @@ Begin your journey with [Module 1: VPC Fundamentals](./modules/01-vpc-fundamenta
 
 ---
 
-**Note**: Always remember to delete resources after completing labs to avoid unnecessary charges.
