@@ -1,3 +1,93 @@
+# 🔢 **VPC IP Formula (CIDR → Number of Hosts)**
+
+### ✅ **Formula**
+
+```
+Number of IPs = 2^(32 – CIDR)
+```
+
+### 🧮 **Usable IPs**
+
+```
+Usable IPs = Total IPs – 5
+```
+
+AWS reserves **5 IPs per subnet**:
+
+* Network address
+* VPC router
+* DNS
+* AWS Reserved
+* Broadcast (not used but reserved)
+
+---
+
+# 📝 **Examples**
+
+### ⭐ **1. CIDR: /16**
+
+```
+Total IPs = 2^(32–16)
+          = 2^16
+          = 65,536
+Usable = 65,536 – 5 = 65,531
+```
+
+---
+
+### ⭐ **2. CIDR: /20**
+
+```
+Total IPs = 2^(32–20)
+          = 2^12
+          = 4096
+Usable = 4096 – 5 = 4091
+```
+
+---
+
+### ⭐ **3. CIDR: /24**
+
+```
+Total IPs = 2^(32–24)
+          = 2^8
+          = 256
+Usable = 256 – 5 = 251
+```
+
+---
+
+# 📘 **Subnet Formula (General)**
+
+### **Network Size**
+
+```
+Block Size = 256 – Subnet Mask Value
+```
+
+Example:
+Subnet Mask = 255.255.255.0 → Last octet = 0
+Block Size = 256 – 0 = 256
+
+For /26 → mask 255.255.255.192
+192 in last octet → Block Size = 256 – 192 = 64
+
+---
+
+# 📦 Quick Table
+
+| CIDR | Total IPs | Usable IPs |
+| ---- | --------- | ---------- |
+| /16  | 65,536    | 65,531     |
+| /20  | 4,096     | 4,091      |
+| /22  | 1,024     | 1,019      |
+| /24  | 256       | 251        |
+| /26  | 64        | 59         |
+| /28  | 16        | 11         |
+
+---
+
+
 # AWS VPC Complete Course
 
 Welcome to the comprehensive AWS Virtual Private Cloud (VPC) course! This course will take you from beginner to advanced levels in understanding and implementing AWS VPC networking.
