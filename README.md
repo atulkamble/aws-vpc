@@ -1,3 +1,257 @@
+# ⭐ **AWS VPC – Important Points, Definitions, Tricks & Commands**
+
+---
+
+# 🧠 **1. Core Definitions (Must Remember)**
+
+### **VPC (Virtual Private Cloud)**
+
+Your own isolated private network inside AWS.
+
+### **CIDR (Classless Inter-Domain Routing)**
+
+Range of IP Address block → example: `10.0.0.0/16`
+
+### **Subnet**
+
+A smaller segment inside VPC used for isolation.
+
+* **Public Subnet** = Has route to **Internet Gateway (IGW)**
+* **Private Subnet** = No direct Internet access
+
+### **Route Table**
+
+Controls traffic routing rules for subnets.
+
+### **Internet Gateway (IGW)**
+
+Allows **public** subnets to communicate with internet.
+
+### **NAT Gateway**
+
+Allows **private** subnets to access internet **OUTBOUND** (yum update, apt update).
+
+### **Security Group**
+
+Firewall at **instance level** — *Stateful*
+
+### **NACL**
+
+Firewall at **subnet level** — *Stateless*
+
+### **VPC Endpoint**
+
+Private connection to AWS services **without internet**
+
+* **Gateway Endpoint** → S3 & DynamoDB
+* **Interface Endpoint** → Most other services (ENI based)
+
+### **Elastic IP (EIP)**
+
+Static public IP address.
+
+### **Peering**
+
+Connect two VPCs (no transitive routing).
+
+### **Transit Gateway (TGW)**
+
+Hub-and-spoke multi-VPC + hybrid connections.
+
+---
+
+# 💡 **2. VPC CIDR Quick Tricks**
+
+### ✔ Trick 1: CIDR Quick Math
+
+`/16` = 65,536 IPs
+`/20` = 4,096 IPs
+`/24` = 256 IPs
+`/28` = 16 IPs
+
+### ✔ Trick 2: AWS Reserves 5 IPs
+
+Example: `10.0.1.0/24`
+
+* .0 → Network
+* .1 → VPC Router
+* .2 → DNS
+* .3 → Future Use
+* .255 → Broadcast
+
+Usable = **256 – 5 = 251 IPs**
+
+### ✔ Trick 3: Public vs Private subnet identification
+
+* Has default route → IGW → **Public**
+* Has default route → NAT → **Private**
+
+### ✔ Trick 4: Subnet AZ Strictness
+
+A subnet **cannot span AZs**.
+
+### ✔ Trick 5: NAT Gateway is created in **Public Subnet**
+
+Because it needs internet access.
+
+---
+
+# 🔐 **3. Security Group vs NACL – Easy Table**
+
+| Feature        | Security Group | NACL                   |
+| -------------- | -------------- | ---------------------- |
+| Stateful       | ✅ Yes          | ❌ No                   |
+| Applied on     | ENI/Instance   | Subnet                 |
+| Default Rule   | Deny all       | Allow all              |
+| Supports deny? | ❌ No           | ✅ Yes                  |
+| Rule order     | No order       | Evaluated top → bottom |
+
+---
+
+# ⚙️ **4. Important AWS VPC Commands (AWS CLI)**
+
+## **Create VPC**
+
+```bash
+aws ec2 create-vpc --cidr-block 10.0.0.0/16
+```
+
+## **Create Subnet**
+
+```bash
+aws ec2 create-subnet \
+  --vpc-id vpc-123456 \
+  --cidr-block 10.0.1.0/24 \
+  --availability-zone ap-south-1a
+```
+
+## **Create Internet Gateway**
+
+```bash
+aws ec2 create-internet-gateway
+aws ec2 attach-internet-gateway --internet-gateway-id igw-123 --vpc-id vpc-123
+```
+
+## **Create Route Table & Routes**
+
+```bash
+aws ec2 create-route-table --vpc-id vpc-123
+aws ec2 create-route \
+  --route-table-id rtb-123 \
+  --destination-cidr-block 0.0.0.0/0 \
+  --gateway-id igw-123
+```
+
+## **Associate Route Table**
+
+```bash
+aws ec2 associate-route-table \
+  --subnet-id subnet-123 \
+  --route-table-id rtb-123
+```
+
+## **Create NAT Gateway**
+
+```bash
+aws ec2 allocate-address
+aws ec2 create-nat-gateway \
+  --subnet-id subnet-public \
+  --allocation-id eipalloc-123
+```
+
+## **Create Security Group**
+
+```bash
+aws ec2 create-security-group \
+  --group-name web-sg \
+  --description "web access" \
+  --vpc-id vpc-123
+```
+
+## **Add SG Rules**
+
+```bash
+aws ec2 authorize-security-group-ingress \
+  --group-id sg-123 --protocol tcp --port 22 --cidr 0.0.0.0/0
+```
+
+---
+
+# 🎯 **5. Exam & Interview Winning Points**
+
+### 🔸 **Public Subnet = Route to IGW**
+
+Most common Viva + Exam question.
+
+### 🔸 **Private Subnet = Route to NAT**
+
+Instance inside private subnet cannot ping internet without NAT.
+
+### 🔸 **SG is Stateful**
+
+If inbound is allowed, outbound automatically allowed.
+
+### 🔸 **VPC Peering is NOT transitive**
+
+A→B works
+B→C works
+A→C does **NOT** work.
+
+### 🔸 **You cannot overlap CIDRs**
+
+Peering will fail if CIDR overlaps.
+
+### 🔸 **VPC Flow Logs show:**
+
+* ACCEPT / REJECT
+* Source IP
+* Destination IP
+* Protocol
+* Action
+
+### 🔸 **Instance in Public Subnet needs 3 things:**
+
+1. Public IP
+2. IGW attached
+3. Route to IGW
+
+### 🔸 **NAT Gateway is per-AZ**
+
+High availability = place NAT in **each AZ**.
+
+---
+
+# 🧭 **6. VPC Components Summary (One-Liners)**
+
+* **VPC** → Full network
+* **Subnet** → Partition of VPC
+* **IGW** → Internet access
+* **NAT GW** → Private → Internet
+* **SG** → Instance firewall
+* **NACL** → Subnet firewall
+* **Route Table** → Routing rules
+* **VPN Gateway** → On-prem ↔ AWS
+* **Transit GW** → Large-scale multi-VPC
+* **VPC Endpoint** → Private AWS service access
+* **DHCP Option Set** → DNS, NTP settings
+* **Elastic IP** → Static Public IP
+
+---
+
+# 🧩 **7. Quick VPC Diagram (Logical)**
+
+```
+VPC (10.0.0.0/16)
+ ├── Public Subnet (10.0.1.0/24)
+ │     ├── EC2 (Public IP)
+ │     └── NAT Gateway
+ │
+ └── Private Subnet (10.0.2.0/24)
+       └── EC2 (No Public IP)
+```
+
+---
+
 # 🔢 **VPC IP Formula (CIDR → Number of Hosts)**
 
 ### ✅ **Formula**
